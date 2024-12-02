@@ -29,9 +29,8 @@ int redondeo(float numero) {
 }
 
 int main() {
-    printf("%d\n", redondeo(9.5));   // Salida: 10 (redondeo hacia arriba)
-    printf("%d\n", redondeo(9.4));   // Salida: 9 (redondeo hacia abajo)
-    printf("%d\n", redondeo(-2.3));  // Salida: -2 (redondeo hacia arriba)
-    printf("%d\n", redondeo(-2.7));  // Salida: -3 (redondeo hacia abajo)
-    return 0;
+    printf("%d\n", redondeo(9.5));  
+    printf("%d\n", redondeo(9.4));  
+    printf("%d\n", redondeo(-2.3)); 
+    printf("%d\n", redondeo(-2.7));
 }
