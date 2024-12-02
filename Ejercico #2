@@ -1,90 +1,13 @@
-//Ejercico #2
-/*
-* Contar la frecuencia de palabras en un texto.
-Objetivo: Utilizar una tabla hash para contar
-cuántas veces aparece cada palabra en un texto.
-
-Descripción:
-Escribe un programa que reciba un texto
-(una cadena de caracteres) y calcule la frecuencia de
-cada palabra en el texto. Almacena las palabras y su
-frecuencia en una tabla hash, donde la clave será la
-palabra y el valor será el número de veces que aparece.
-
-Ejemplo de entrada:
-"la programación es divertida la programación es fácil"*/
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define MAX_TOKENS 100
 #define TABLE_SIZE 100
 
-// Estructura para almacenar la palabra y su frecuencia
-typedef struct WordCount {
-    char* word;
-    int count;
-    struct WordCount* next;
-} WordCount;
-
-// Función de hash para asignar un índice a cada palabra
-unsigned int hash(const char* str) {
-    unsigned int hashValue = 0;
-    while (*str) {
-        hashValue = (hashValue * 31) + (unsigned char)(*str++);
-    }
-    return hashValue % TABLE_SIZE;
-}
-
-// Función para crear una nueva entrada en la tabla hash
-WordCount* createWordCount(const char* word) {
-    WordCount* newEntry = (WordCount*)malloc(sizeof(WordCount));
-    newEntry->word = strdup(word);  // Guardamos una copia de la palabra
-    newEntry->count = 1;            // Inicializamos el contador
-    newEntry->next = NULL;          // Inicializamos el siguiente puntero a NULL
-    return newEntry;
-}
-
-// Función para insertar o actualizar la frecuencia de una palabra en la tabla hash
-void insertWordCount(WordCount** hashTable, const char* word) {
-    unsigned int index = hash(word);
-    WordCount* current = hashTable[index];
-
-    // Si no hay ninguna entrada en esa posición, creamos una nueva
-    if (current == NULL) {
-        hashTable[index] = createWordCount(word);
-    } else {
-        // Buscamos si la palabra ya está en la lista
-        while (current != NULL) {
-            if (strcmp(current->word, word) == 0) {
-                current->count++;
-                return;
-            }
-            current = current->next;
-        }
-
-        // Si no encontramos la palabra, creamos una nueva entrada en la lista enlazada
-        WordCount* newEntry = createWordCount(word);
-        newEntry->next = hashTable[index];
-        hashTable[index] = newEntry;
-    }
-}
-
-// Función para liberar la memoria de la tabla hash
-void freeHashTable(WordCount** hashTable) {
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        WordCount* current = hashTable[i];
-        while (current != NULL) {
-            WordCount* temp = current;
-            current = current->next;
-            free(temp->word);
-            free(temp);
-        }
-    }
-}
-
-// Función que simula split en C (se basa en el código que diste)
+// Función que simula split en C
 char** split(const char* str, const char* delimiter, int* count) {
     // Crear un arreglo para almacenar los tokens
     char** tokens = (char**)malloc(MAX_TOKENS * sizeof(char*));
@@ -104,36 +27,95 @@ char** split(const char* str, const char* delimiter, int* count) {
     return tokens;  // Regresamos el arreglo de tokens
 }
 
-int main() {
-    const char* str = "la programacion es divertida la programacion es fácil";
-    const char* delimiter = " ";  // Delimitador por espacio
-    int count = 0;
+// Estructura para la tabla hash
+typedef struct HashNode {
+    char* key;
+    int value;
+    struct HashNode* next;
+} HashNode;
 
-    // Tabla hash para almacenar las palabras y sus frecuencias
-    WordCount* hashTable[TABLE_SIZE] = {NULL};
-
-    // Dividimos el texto en palabras
-    char** tokens = split(str, delimiter, &count);
-
-    // Insertamos las palabras en la tabla hash
-    for (int i = 0; i < count; i++) {
-        insertWordCount(hashTable, tokens[i]);
-        free(tokens[i]);  // Liberamos cada token después de insertarlo
+// Función de hash simple (basada en el valor ASCII de los caracteres)
+unsigned int hash(const char* key) {
+    unsigned int hashValue = 0;
+    while (*key) {
+        hashValue = hashValue * 31 + *key++;  // Usamos un valor primo (31) como multiplicador
     }
-    free(tokens);  // Liberamos el arreglo de punteros
+    return hashValue % TABLE_SIZE;
+}
 
-    // Mostramos las frecuencias
-    printf("Frecuencia de palabras:\n");
+// Función para insertar o actualizar una palabra en la tabla hash
+void insert(HashNode** table, const char* key) {
+    unsigned int index = hash(key);
+    HashNode* current = table[index];
+
+    // Buscar si la palabra ya existe en la tabla
+    while (current != NULL) {
+        if (strcmp(current->key, key) == 0) {
+            current->value++;  // Si la palabra ya está en la tabla, incrementamos su contador
+            return;
+        }
+        current = current->next;
+    }
+
+    // Si la palabra no está en la tabla, la insertamos
+    HashNode* newNode = (HashNode*)malloc(sizeof(HashNode));
+    newNode->key = strdup(key);
+    newNode->value = 1;  // Inicializamos la frecuencia en 1
+    newNode->next = table[index];
+    table[index] = newNode;
+}
+
+// Función para liberar la memoria de la tabla hash
+void freeTable(HashNode** table) {
     for (int i = 0; i < TABLE_SIZE; i++) {
-        WordCount* current = hashTable[i];
+        HashNode* current = table[i];
         while (current != NULL) {
-            printf("%s: %d\n", current->word, current->count);
+            HashNode* temp = current;
+            current = current->next;
+            free(temp->key);
+            free(temp);
+        }
+    }
+}
+
+// Función para mostrar la frecuencia de las palabras
+void printFrequencies(HashNode** table) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        HashNode* current = table[i];
+        while (current != NULL) {
+            printf("%s: %d\n", current->key, current->value);
             current = current->next;
         }
     }
+}
+
+int main() {
+    const char* text = "la programacion es divertida la programacion es facil";
+    const char* delimiter = " ";  // Delimitador por espacio
+    int count = 0;
+
+    // Llamamos a la función split para dividir el texto en palabras
+    char** tokens = split(text, delimiter, &count);
+
+    // Creamos una tabla hash vacía
+    HashNode* hashTable[TABLE_SIZE] = {0};
+
+    // Insertamos las palabras en la tabla hash
+    for (int i = 0; i < count; i++) {
+        insert(hashTable, tokens[i]);
+        free(tokens[i]);  // Liberamos cada token
+    }
+
+    free(tokens);  // Liberamos el arreglo de punteros
+
+    printf("la frase es: la programacion es divertida la programacion es facil \n");
+
+    // Mostramos la frecuencia de las palabras
+    printf("Frecuencia de palabras:\n");
+    printFrequencies(hashTable);
 
     // Liberamos la memoria de la tabla hash
-    freeHashTable(hashTable);
+    freeTable(hashTable);
 
     return 0;
 }
