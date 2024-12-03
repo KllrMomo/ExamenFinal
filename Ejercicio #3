@@ -1,0 +1,89 @@
+//Ejercicio #3
+/*
+ * Modifique su algoritmo de Huffman o modifique
+ * este código, para decodificar el siguiente mensaje:
+ * 010011101100010010100010100110001001010001101100100000110000011*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+// Definición del nodo del árbol de Huffman
+struct Nodo
+{
+    char caracter;
+    struct Nodo *left;
+    struct Nodo *Right;
+};
+
+// Función para crear un nuevo nodo
+struct Nodo *crearNodo(char caracter)
+{
+    struct Nodo *nuevoNodo = (struct Nodo*)malloc(sizeof(struct Nodo));
+    if (nuevoNodo != NULL)
+    {
+        nuevoNodo->caracter = caracter;
+        nuevoNodo->left = NULL;
+        nuevoNodo->Right = NULL;
+    }
+    return nuevoNodo;
+}
+
+// insertar un nodo en el árbol de Huffman según su código binario
+struct Nodo* insertarNodo(struct Nodo* root, char caracter, const char* codigo)
+{
+    struct Nodo* current = root;
+    for (int i = 0; codigo[i] != '\0'; i++)
+    {
+        if (codigo[i] == '0') {
+            if (current->left == NULL)
+                current->left = crearNodo('\0'); // Nodo vacío
+            current = current->left;
+        } else if (codigo[i] == '1') {
+            if (current->Right == NULL)
+                current->Right = crearNodo('\0'); // Nodo vacío
+            current = current->Right;
+        }
+    }
+    current->caracter = caracter; // Asignar el carácter al nodo hoja
+    return root;
+}
+
+// decodificar el mensaje con árbol de Huffman
+void decodificarMensaje(struct Nodo* root, const char* mensaje)
+{
+    struct Nodo* current = root;
+    for (int i = 0; mensaje[i] != '\0'; i++)
+    {
+        if (mensaje[i] == '0')
+            current = current->left;  // Ir al hijo izquierdo
+        else if (mensaje[i] == '1')
+            current = current->Right; // Ir al hijo derecho
+
+        // Si llegamos a una hoja, imprimimos el carácter
+        if (current->left == NULL && current->Right == NULL)
+        {
+            printf("%c", current->caracter); // Imprimir el carácter decodificado
+            current = root;  // Volver al nodo raíz después de imprimir un carácter
+        }
+    }
+}
+
+int main()
+{
+    // Crear el árbol de Huffman (ejemplo con caracteres A, B, C, D)
+    struct Nodo* root = crearNodo('\0'); // Nodo raíz vacío
+    root = insertarNodo(root, 'A', "00"); // Inserta 'A' con el código binario "00"
+    root = insertarNodo(root, 'B', "01"); // Inserta 'B' con el código binario "01"
+    root = insertarNodo(root, 'C', "10"); // Inserta 'C' con el código binario "10"
+    root = insertarNodo(root, 'D', "11"); // Inserta 'D' con el código binario "11"
+
+    // Mensaje binario a decodificar
+    const char* mensaje = "010011101100010010100010100110001001010001101100100000110000011";
+
+    // Decodificar el mensaje
+    printf("Mensaje decodificado: ");
+    decodificarMensaje(root, mensaje);
+    printf("\n");
+
+    return 0;
+}
